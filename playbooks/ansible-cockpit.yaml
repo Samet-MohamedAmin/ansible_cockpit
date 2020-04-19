@@ -1,0 +1,65 @@
+---
+-
+  hosts:
+    - all
+    - localhost
+  become: yes
+  vars:
+    cockpit_items:
+      - cockpit
+      - cockpit-system
+      - cockpit-ws
+      - cockpit-bridge
+      - cockpit-packagekit
+      - cockpit-dashboard
+      - cockpit-machines
+  tasks:
+    -
+      name: enable cockpit copr repo
+      yum_repository:
+        name: "copr-cockpit"
+        description: "cockpit copr"
+        baseurl: "https://download.copr.fedorainfracloud.org/results/@cockpit/cockpit-preview/epel-8-$basearch/"
+        gpgkey: "https://download.copr.fedorainfracloud.org/results/@cockpit/cockpit-preview/pubkey.gpg"
+        gpgcheck: yes
+        enabled: yes
+    -
+      name: install cockpit tools
+      dnf:
+        name: "{{ cockpit_items }}"
+        enablerepo: copr-cockpit
+        state: latest
+      notify: start cockpit service
+    -
+      name: enable unecrypted connection
+      lineinfile:
+        dest: /etc/cockpit/cockpit.conf
+        line: "[WebService]\nAllowUnencrypted=true"
+        state: present
+        create: yes
+    -
+      name: populate service facts
+      service_facts:
+
+  handlers:
+    -
+      name: start cockpit service
+      service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: true
+      with_items:
+        - cockpit
+        - cockpit.service
+        - cockpit.socket
+      notify: manage cockpit firewalld service
+      # loop: "{{ ansible_facts.services.keys() | select('match', '^cockpit*') | list}}"
+    -
+      name: manage cockpit firewalld service
+      firewalld:
+        service: cockpit
+        permanent: true
+        immediate: true
+        state: enabled
+      when: "ansible_facts.services['firewalld.service'].status != 'disabled'"
+      

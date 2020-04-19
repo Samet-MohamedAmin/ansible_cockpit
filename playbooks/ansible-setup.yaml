@@ -1,0 +1,35 @@
+---
+-
+  become: yes
+  connection: local
+  hosts: localhost
+  tasks:
+    -
+      name: add hosts to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+        state: present
+      loop: "{{ lookup('file', '/vagrant/config/hosts').splitlines() }}"
+    -
+      name: create /etc/ansible directory
+      file:
+        path: /etc/ansible
+        state: directory
+    -
+      name: add ansible hosts to /etc/ansible/hosts
+      copy:
+        dest: /etc/ansible/hosts
+        src: /vagrant/ansible_inventory
+    -
+      name: copy private ssh key
+      copy:
+        dest: "/home/vagrant/.ssh/{{ item.name }}"
+        src: /vagrant/ssh/{{ item.name }}
+        mode: "{{ item.mode }}"
+        owner: vagrant
+        group: vagrant
+      loop:
+        - { name: 'id_rsa', mode: "0400" }
+        - { name: 'config', mode: "0644" }
+        
