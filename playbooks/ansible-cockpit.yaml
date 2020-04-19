@@ -61,5 +61,5 @@
         permanent: true
         immediate: true
         state: enabled
-      when: "('firewalld.service' not in ansible_facts.services ) || ansible_facts.services['firewalld.service'].status != 'disabled'"
+      when: "('firewalld.service' not in ansible_facts.services ) or (ansible_facts.services['firewalld.service'].status != 'disabled')"
       
