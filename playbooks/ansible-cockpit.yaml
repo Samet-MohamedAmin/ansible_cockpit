@@ -46,7 +46,7 @@
       name: start cockpit service
       service:
         name: "{{ item }}"
-        state: stopped
+        state: restarted
         enabled: true
       with_items:
         - cockpit
